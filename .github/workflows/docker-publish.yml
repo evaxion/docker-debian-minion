@@ -98,7 +98,7 @@ jobs:
 
       - name: Test Docker image
         run: |
-          docker run --rm ${{ env.IMAGE_NAME }}:${{ github.sha }} /bin/bash -c "salt-call --local test.version"
+          docker run --rm ${{ env.IMAGE_NAME }}:sha-${{ github.sha }} /bin/bash -c "salt-call --local test.version"
 
       - name: Push Docker image
         id: build-and-push
