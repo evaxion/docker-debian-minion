@@ -27,7 +27,7 @@ jobs:
       id-token: write
     strategy:
       matrix:
-        debian: [bullseye, buster, stretch]
+        debian: [bullseye, buster, stretch, jessie]
     env:
       # Use docker.io for Docker Hub if empty
       REGISTRY: ghcr.io
@@ -72,17 +72,35 @@ jobs:
           # tag main branch as latest
           # tag using semver version
           # tag using branch name
+          # tag using git long commit sha
           tags: |
             type=raw,value=latest,enable=${{ endsWith(github.ref, 'main') }}
             type=semver,pattern={{version}}
             type=ref,event=branch
+            type=sha,format=long
           # add a link to the github source repository
           #labels: |
           #  org.opencontainers.image.source=https://github.com/${{ github.repository }}
 
       # Build and push Docker image with Buildx (don't push on PR)
       # https://github.com/docker/build-push-action
-      - name: Build and push Docker image
+      - name: Build Docker image
+        id: build-for-test
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          build-args: |
+            DEBIAN_RELEASE=${{ matrix.debian }}
+          load: true
+          push: false
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Test Docker image
+        run: |
+          docker run --rm ${{ env.IMAGE_NAME }}:${{ github.sha }} /bin/bash -c "salt-call --local test.version"
+
+      - name: Push Docker image
         id: build-and-push
         uses: docker/build-push-action@v2
         with:

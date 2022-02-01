@@ -23,7 +23,7 @@ RUN <<EOF
     #
     apt-get -qq -y install curl git sudo lsb-release
     case "$(lsb_release -s --codename)" in
-        stretch)
+        stretch|jessie)
             apt-get -qq -y install apt-transport-https
         ;;
     esac
@@ -43,11 +43,38 @@ RUN <<EOF
     #
     # configure salt repo
     #
-    SALT_REPO_URL="https://repo.saltproject.io/py3/debian/${DEBIAN_RELEASE}/amd64/latest"
-    SALT_REPO_KEY="${SALT_REPO_URL}/salt-archive-keyring.gpg"
-    SALT_KEY_FILE="/usr/share/keyrings/salt-archive-keyring.gpg"
-    curl -fsSL -o $SALT_KEY_FILE $SALT_REPO_KEY
-    echo "deb [signed-by=$SALT_KEY_FILE arch=amd64] ${SALT_REPO_URL} ${DEBIAN_CODENAME} main" | sudo tee /etc/apt/sources.list.d/salt.list
+    case "$DEBIAN_CODENAME" in
+        jessie)
+            SALT_REPO_URL="https://archive.repo.saltproject.io/debian"
+            SALT_REPO_KEY="https://archive.repo.saltproject.io/debian-salt-team-joehealy.gpg.key"
+            SALT_KEY_FILE="/usr/share/keyrings/salt-archive-keyring.gpg"
+            SALT_APT_SRC="deb [arch=amd64] ${SALT_REPO_URL} ${DEBIAN_CODENAME}-saltstack main"
+        ;;
+        *)
+            SALT_REPO_URL="https://repo.saltproject.io/py3/debian/${DEBIAN_RELEASE}/amd64/latest"
+            SALT_REPO_KEY="${SALT_REPO_URL}/salt-archive-keyring.gpg"
+            SALT_KEY_FILE="/usr/share/keyrings/salt-archive-keyring.gpg"
+            SALT_APT_SRC="deb [signed-by=$SALT_KEY_FILE arch=amd64] ${SALT_REPO_URL} ${DEBIAN_CODENAME} main"
+        ;;
+    esac
+    #
+    # install gpg key
+    #
+    case "$DEBIAN_CODENAME" in
+        jessie)
+            curl -fsSL "$SALT_REPO_KEY" | apt-key add -
+        ;;
+        *)
+            curl -fsSL -o $SALT_KEY_FILE $SALT_REPO_KEY
+        ;;
+    esac
+    #
+    # add apt source
+    #
+    echo "$SALT_APT_SRC" | sudo tee /etc/apt/sources.list.d/salt.list
+    #
+    # install packages
+    #
     apt-get -qq -y update
     apt-get -qq -y install ${SALT_PACKAGES}
     rm -rf /var/lib/apt/lists/*
