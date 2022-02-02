@@ -16,6 +16,10 @@ build: ## build docker image locally
 	done
 	#docker tag evaxion/debian-minion-bullseye:latest evaxion/debian-minion:latest
 
+.PHONY: build-jessie
+build-jessie: ## build jessie docker image locally
+	docker build --tag evaxion/debian-minion-jessie:latest --build-arg DEBIAN_RELEASE=jessie .; \
+
 .PHONY: test
 test: ## test  salt installation
 	@for DEBIAN_RELEASE in $(DEBIAN_RELEASES) ; do \
