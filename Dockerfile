@@ -14,6 +14,14 @@ RUN <<EOF
     #
     echo 'Dpkg::Use-Pty "0";' > /etc/apt/apt.conf.d/00usepty
     #
+    # http://archive.debian.org/debian is too old and can not be checked anymore
+    #
+    case "$(lsb_release -s --codename)" in
+        jessie)
+            echo 'Acquire::Check-Valid-Until false;' > /etc/apt/apt.conf.d/10-nocheckvalid
+        ;;
+    esac
+    #
     # upgrade system
     #
     apt-get -qq update
