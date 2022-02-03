@@ -78,7 +78,7 @@ RUN <<EOF
             echo 'Acquire::Check-Valid-Until false;' | tee -a /etc/apt/apt.conf.d/10-nocheckvalid 
             apt-get -qq -y update
             apt-get -qq -y install ${SALT_PACKAGES} python-git
-            apt-get -qq -y install --only-upgrade python-git -t jessie-backports
+            apt-get -qq -y install --only-upgrade -t jessie-backports python-git
             rm -rf /var/lib/apt/lists/*
         ;;
         *)
